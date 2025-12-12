@@ -162,7 +162,7 @@ export default function App() {
 
       {/* Footer */}
       <footer className="mt-12 text-center text-slate-400 text-sm pb-8">
-        <p>© 2024 Companigonj Student Association</p>
+        <p>© 2025 Companigonj Student Association</p>
       </footer>
 
       {/* View 3: Student Details Modal */}
