@@ -21,8 +21,11 @@ import { Student } from './types';
 export default function App() {
   const [selectedUnion, setSelectedUnion] = useState<string | null>(null);
   const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
-  const [logoError, setLogoError] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  
+  // Logo handling state
+  const [logoSrc, setLogoSrc] = useState('/logo.png');
+  const [useFallback, setUseFallback] = useState(false);
 
   // Filter students based on selected union and search query
   const filteredStudents = useMemo(() => {
@@ -52,23 +55,37 @@ export default function App() {
     setSearchQuery('');
   };
 
+  // Robust logo error handler to try different extensions
+  const handleLogoError = () => {
+    if (logoSrc === '/logo.png') {
+      // Try JPG
+      setLogoSrc('/logo.jpg');
+    } else if (logoSrc === '/logo.jpg') {
+      // Try JPEG
+      setLogoSrc('/logo.jpeg');
+    } else if (logoSrc === '/logo.jpeg') {
+      // Try Capitalized Case (common in some downloads)
+      setLogoSrc('/Logo.png');
+    } else {
+      // Give up and show fallback
+      setUseFallback(true);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-slate-50 text-slate-800 font-sans pb-12">
       {/* Header */}
       <header className="bg-brand-green text-white shadow-lg sticky top-0 z-10">
         <div className="max-w-3xl mx-auto px-4 py-4">
           <div className="flex items-center gap-4">
-            <div className="bg-white p-1.5 rounded-full shadow-md shrink-0 overflow-hidden">
-               {/* Logo Image: Ensure 'logo.png' is in your public folder */}
-               {!logoError ? (
+            <div className="bg-white p-1.5 rounded-full shadow-md shrink-0 overflow-hidden relative">
+               {/* Logo Image Logic */}
+               {!useFallback ? (
                  <img 
-                   src="/logo.png" 
+                   src={logoSrc} 
                    alt="Logo" 
                    className="w-16 h-16 object-contain" 
-                   onError={(e) => {
-                     console.error("Logo load failed. Please ensure 'logo.png' exists in the 'public' folder.");
-                     setLogoError(true);
-                   }}
+                   onError={handleLogoError}
                  />
                ) : (
                  <div className="w-16 h-16 flex items-center justify-center bg-slate-100 rounded-full">
