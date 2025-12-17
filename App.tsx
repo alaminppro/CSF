@@ -12,7 +12,8 @@ import {
   X,
   ChevronLeft,
   Building2,
-  CalendarDays
+  CalendarDays,
+  Search
 } from 'lucide-react';
 import { STUDENTS, UNIONS } from './constants';
 import { Student } from './types';
@@ -20,12 +21,26 @@ import { Student } from './types';
 export default function App() {
   const [selectedUnion, setSelectedUnion] = useState<string | null>(null);
   const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
+  const [logoError, setLogoError] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
 
-  // Filter students based on selected union
+  // Filter students based on selected union and search query
   const filteredStudents = useMemo(() => {
     if (!selectedUnion) return [];
-    return STUDENTS.filter(student => student.union === selectedUnion);
-  }, [selectedUnion]);
+    
+    let students = STUDENTS.filter(student => student.union === selectedUnion);
+
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase().trim();
+      students = students.filter(student => 
+        student.name.toLowerCase().includes(query) ||
+        student.department.toLowerCase().includes(query) ||
+        student.session.toLowerCase().includes(query)
+      );
+    }
+
+    return students;
+  }, [selectedUnion, searchQuery]);
 
   // Handler for closing modal
   const closeModal = () => setSelectedStudent(null);
@@ -34,6 +49,7 @@ export default function App() {
   const handleBackToUnions = () => {
     setSelectedUnion(null);
     setSelectedStudent(null);
+    setSearchQuery('');
   };
 
   return (
@@ -41,14 +57,28 @@ export default function App() {
       {/* Header */}
       <header className="bg-brand-green text-white shadow-lg sticky top-0 z-10">
         <div className="max-w-3xl mx-auto px-4 py-4">
-          <div className="flex items-center gap-3">
-            <div className="bg-white p-1 rounded-full shadow-md shrink-0">
+          <div className="flex items-center gap-4">
+            <div className="bg-white p-1.5 rounded-full shadow-md shrink-0 overflow-hidden">
                {/* Logo Image: Ensure 'logo.png' is in your public folder */}
-               <img src="/logo.png" alt="Logo" className="w-12 h-12 object-contain" />
+               {!logoError ? (
+                 <img 
+                   src="/logo.png" 
+                   alt="Logo" 
+                   className="w-16 h-16 object-contain" 
+                   onError={(e) => {
+                     console.error("Logo load failed. Please ensure 'logo.png' exists in the 'public' folder.");
+                     setLogoError(true);
+                   }}
+                 />
+               ) : (
+                 <div className="w-16 h-16 flex items-center justify-center bg-slate-100 rounded-full">
+                    <GraduationCap className="w-10 h-10 text-brand-green" />
+                 </div>
+               )}
             </div>
             <div>
               <h1 className="text-lg font-bold leading-tight">Companiganj (Noakhali) Students' Forum, University of Chittagong</h1>
-              <p className="text-sm opacity-90 text-slate-100 font-medium">জ্ঞানের পথে চলি একসাথে</p>
+              <p className="text-sm opacity-90 text-slate-100 font-medium mt-1">জ্ঞানের পথে চলি একসাথে</p>
             </div>
           </div>
         </div>
@@ -110,6 +140,28 @@ export default function App() {
               </p>
             </div>
 
+            {/* Search Bar */}
+            <div className="relative mb-6">
+              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <Search className="h-5 w-5 text-slate-400" />
+              </div>
+              <input
+                type="text"
+                placeholder="খুঁজুন (নাম, বিভাগ বা সেশন)..."
+                className="block w-full pl-10 pr-10 py-3 border border-slate-300 rounded-xl leading-5 bg-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-brand-green focus:border-transparent shadow-sm transition-shadow"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+              />
+              {searchQuery && (
+                 <button 
+                    onClick={() => setSearchQuery('')}
+                    className="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-slate-600"
+                 >
+                    <X className="h-5 w-5" />
+                 </button>
+              )}
+            </div>
+
             {/* List Items */}
             <div className="space-y-3">
               {filteredStudents.length > 0 ? (
@@ -152,8 +204,12 @@ export default function App() {
                 ))
               ) : (
                 <div className="text-center py-12 text-slate-400 bg-white rounded-xl border border-dashed border-slate-300">
-                  <Users className="w-12 h-12 mx-auto mb-3 opacity-20" />
-                  <p>এই ইউনিয়নের জন্য কোন তথ্য পাওয়া যায়নি।</p>
+                  <Search className="w-12 h-12 mx-auto mb-3 opacity-20" />
+                  <p>
+                    {searchQuery 
+                      ? "কোন ফলাফল পাওয়া যায়নি।" 
+                      : "এই ইউনিয়নের জন্য কোন তথ্য পাওয়া যায়নি।"}
+                  </p>
                 </div>
               )}
             </div>
@@ -164,7 +220,7 @@ export default function App() {
       {/* Footer */}
       <footer className="mt-12 text-center text-slate-400 text-sm pb-8">
         <p>
-          © 2025 Companigonj Student Association | Developed by: {' '}
+          © 2025 Companiganj (Noakhali) Students' Forum, CU | Developed by: {' '}
           <a 
             href="https://www.facebook.com/itsmdalamin" 
             target="_blank" 
