@@ -18,15 +18,33 @@ import {
 import { STUDENTS, UNIONS } from './constants';
 import { Student } from './types';
 
+// Dedicated Logo Component
+// This is configured to load "logo.png" from your project root
+const Logo = () => (
+  <div className="bg-white p-1.5 rounded-full shadow-md shrink-0 flex items-center justify-center w-14 h-14 sm:w-16 sm:h-16 overflow-hidden border border-slate-100">
+     {/* 
+        INSTRUCTIONS: 
+        1. Place your PNG file in the public folder (or root directory).
+        2. Name it "logo.png".
+        3. If the file is missing, the onError function below will show a placeholder.
+     */}
+     <img 
+        src="/logo.png" 
+        alt="Forum Logo" 
+        className="w-full h-full object-contain"
+        onError={(e) => {
+          // Fallback if logo.png is not found
+          e.currentTarget.src = "https://scontent.fdac1-1.fna.fbcdn.net/v/t39.30808-6/472265008_1033168891946375_7161103710877360556_n.jpg?_nc_cat=101&ccb=1-7&_nc_sid=6ee11a&_nc_ohc=ICT18WaqncgQ7kNvwGicTDo&_nc_oc=AdmkEbSDX3qgEfd_-TU9aopnuk6LwqTLNSNTNqwrk7H7H3bxowm4gJNmeCQH0rx2QzU&_nc_zt=23&_nc_ht=scontent.fdac1-1.fna&_nc_gid=5phvwzeVcO9PwmUtXoFsqg&oh=00_Afl7CUTtzt0EF3mfzH0HT93c_VWsHFCgzlL-ZK-MIktPag&oe=6948398A";
+        }}
+     />
+  </div>
+);
+
 export default function App() {
   const [selectedUnion, setSelectedUnion] = useState<string | null>(null);
   const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   
-  // Logo handling state
-  const [logoSrc, setLogoSrc] = useState('/logo.png');
-  const [useFallback, setUseFallback] = useState(false);
-
   // Filter students based on selected union and search query
   const filteredStudents = useMemo(() => {
     if (!selectedUnion) return [];
@@ -55,47 +73,21 @@ export default function App() {
     setSearchQuery('');
   };
 
-  // Robust logo error handler to try different extensions
-  const handleLogoError = () => {
-    if (logoSrc === '/logo.png') {
-      // Try JPG
-      setLogoSrc('/logo.jpg');
-    } else if (logoSrc === '/logo.jpg') {
-      // Try JPEG
-      setLogoSrc('/logo.jpeg');
-    } else if (logoSrc === '/logo.jpeg') {
-      // Try Capitalized Case (common in some downloads)
-      setLogoSrc('/Logo.png');
-    } else {
-      // Give up and show fallback
-      setUseFallback(true);
-    }
-  };
-
   return (
     <div className="min-h-screen bg-slate-50 text-slate-800 font-sans pb-12">
       {/* Header */}
       <header className="bg-brand-green text-white shadow-lg sticky top-0 z-10">
         <div className="max-w-3xl mx-auto px-4 py-4">
           <div className="flex items-center gap-4">
-            <div className="bg-white p-1.5 rounded-full shadow-md shrink-0 overflow-hidden relative">
-               {/* Logo Image Logic */}
-               {!useFallback ? (
-                 <img 
-                   src={logoSrc} 
-                   alt="Logo" 
-                   className="w-16 h-16 object-contain" 
-                   onError={handleLogoError}
-                 />
-               ) : (
-                 <div className="w-16 h-16 flex items-center justify-center bg-slate-100 rounded-full">
-                    <GraduationCap className="w-10 h-10 text-brand-green" />
-                 </div>
-               )}
-            </div>
+            {/* Logo Section */}
+            <Logo />
             <div>
-              <h1 className="text-lg font-bold leading-tight">Companiganj (Noakhali) Students' Forum, University of Chittagong</h1>
-              <p className="text-sm opacity-90 text-slate-100 font-medium mt-1">জ্ঞানের পথে চলি একসাথে</p>
+              <h1 className="text-lg sm:text-xl font-bold leading-tight">
+                Companiganj (Noakhali) Students' Forum, University of Chittagong
+              </h1>
+              <p className="text-sm opacity-90 text-slate-100 font-medium mt-1">
+                জ্ঞানের পথে চলি একসাথে
+              </p>
             </div>
           </div>
         </div>
