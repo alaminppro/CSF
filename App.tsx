@@ -42,12 +42,13 @@ export default function App() {
       <header className="bg-brand-green text-white shadow-lg sticky top-0 z-10">
         <div className="max-w-3xl mx-auto px-4 py-4">
           <div className="flex items-center gap-3">
-            <div className="bg-white p-2 rounded-full shadow-md">
-               <GraduationCap className="w-6 h-6 text-brand-red" />
+            <div className="bg-white p-1 rounded-full shadow-md shrink-0">
+               {/* Logo Image: Ensure 'logo.png' is in your public folder */}
+               <img src="/logo.png" alt="Logo" className="w-12 h-12 object-contain" />
             </div>
             <div>
-              <h1 className="text-lg font-bold leading-tight">Companigonj Student Association</h1>
-              <p className="text-sm opacity-90 text-slate-100">কোম্পানীগঞ্জ ছাত্র সমিতি</p>
+              <h1 className="text-lg font-bold leading-tight">Companiganj (Noakhali) Students' Forum, University of Chittagong</h1>
+              <p className="text-sm opacity-90 text-slate-100 font-medium">জ্ঞানের পথে চলি একসাথে</p>
             </div>
           </div>
         </div>
@@ -60,7 +61,7 @@ export default function App() {
           <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
             <div className="text-center mb-6">
               <h2 className="text-2xl font-bold text-brand-green mb-2">ইউনিয়ন নির্বাচন করুন</h2>
-              <p className="text-slate-500">আপনার এলাকার ছাত্রদের তালিকা দেখতে নিচে ক্লিক করুন</p>
+              <p className="text-slate-500">বর্তমান ছাত্রছাত্রীদের নামের তালিকা দেখতে নিচে ক্লিক করুন</p>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -162,7 +163,17 @@ export default function App() {
 
       {/* Footer */}
       <footer className="mt-12 text-center text-slate-400 text-sm pb-8">
-        <p>© 2025 Companigonj Student Association</p>
+        <p>
+          © 2025 Companigonj Student Association | Developed by: {' '}
+          <a 
+            href="https://www.facebook.com/itsmdalamin" 
+            target="_blank" 
+            rel="noopener noreferrer"
+            className="text-brand-green hover:underline font-medium"
+          >
+            Md Al Amin
+          </a>
+        </p>
       </footer>
 
       {/* View 3: Student Details Modal */}
