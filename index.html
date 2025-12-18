@@ -12,9 +12,9 @@
           extend: {
             colors: {
               brand: {
-                green: '#006a4e', // Bangladesh Flag Green
-                red: '#f42a41',   // Bangladesh Flag Red
-                light: '#f0fdf4',
+                primary: '#09b2eb', // New Logo Color
+                secondary: '#078ebc',
+                light: '#e6f7fd',
               }
             },
             fontFamily: {
@@ -28,6 +28,17 @@
       body {
         font-family: 'Hind Siliguri', sans-serif;
         background-color: #f8fafc;
+        -webkit-font-smoothing: antialiased;
+      }
+      .custom-scrollbar::-webkit-scrollbar {
+        width: 6px;
+      }
+      .custom-scrollbar::-webkit-scrollbar-track {
+        background: #f1f1f1;
+      }
+      .custom-scrollbar::-webkit-scrollbar-thumb {
+        background: #09b2eb;
+        border-radius: 10px;
       }
     </style>
   <script type="importmap">

@@ -7,7 +7,8 @@ export interface Student {
   mobile: string;
   email: string;
   highSchool: string;
-  primarySchool: string;
+  college: string; // New field
+  villageWard: string; // New field
   facebook: string;
   gender: 'male' | 'female';
 }
