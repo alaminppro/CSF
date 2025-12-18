@@ -559,5 +559,19 @@ export const STUDENTS: Student[] = [
     highSchool: "Basurhat A.H.C Govt High School",
     college: "Noakhali Govt College",
     facebook: "facebook.com/share/1DL1NmVgso/"
+  },
+  {
+    id: 40,
+    name: "Sofiul Alam",
+    gender: "male",
+    union: "৬ নং রামপুর ইউনিয়ন",
+    department: "Philosophy",
+    session: "১৮-১৯",
+    mobile: "01857803169",
+    email: "sofiulridon30@gmail.com",
+    villageWard: "Rampur",
+    highSchool: "Rongmala darussunnah Alim Madrasah",
+    college: "Feni Govt College",
+    facebook: "facebook.com/shofiul.ridon"
   }
 ];

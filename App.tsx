@@ -92,9 +92,16 @@ export default function App() {
 
       <main className="max-w-3xl mx-auto px-4 mt-6">
         
-        {/* Universal Search Bar - Always visible except when viewing detail modal */}
-        <div className="mb-6 sticky top-[100px] z-10 bg-slate-50/80 backdrop-blur-md py-2 px-1 rounded-xl">
-           <div className="relative group">
+        {/* View 1: Union Selector or Search Results (when no union selected) */}
+        {!selectedUnion ? (
+          <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+            <div className="text-center mb-6">
+              <h2 className="text-2xl font-bold text-brand-primary mb-2">এলাকা নির্বাচন করুন</h2>
+              <p className="text-slate-500">আপনার ইউনিয়নের ছাত্রছাত্রীদের দেখতে নিচে ক্লিক করুন</p>
+            </div>
+
+            {/* Home Page Search Bar - Positioned under subtitle */}
+            <div className="mb-8 relative group max-w-2xl mx-auto">
               <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                 <Search className="h-5 w-5 text-brand-primary group-focus-within:scale-110 transition-transform" />
               </div>
@@ -113,17 +120,8 @@ export default function App() {
                     <X className="h-6 w-6" />
                  </button>
               )}
-           </div>
-           {searchQuery && !selectedUnion && (
-             <p className="mt-2 text-sm text-brand-primary font-medium animate-pulse">
-                সার্চ রেজাল্ট দেখানো হচ্ছে...
-             </p>
-           )}
-        </div>
+            </div>
 
-        {/* View 1: Union Selector or Search Results (when no union selected) */}
-        {!selectedUnion ? (
-          <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
             {searchQuery ? (
               /* Global Search Results */
               <div className="space-y-3">
@@ -141,35 +139,28 @@ export default function App() {
               </div>
             ) : (
               /* Union Grid */
-              <div>
-                <div className="text-center mb-8">
-                  <h2 className="text-2xl font-bold text-brand-primary mb-2">ইউনিয়ন নির্বাচন করুন</h2>
-                  <p className="text-slate-500">আপনার ইউনিয়নের ছাত্রছাত্রীদের দেখতে নিচে ক্লিক করুন</p>
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  {UNIONS.map((union, index) => (
-                    <button
-                      key={index}
-                      onClick={() => handleUnionSelect(union)}
-                      className="group relative bg-white p-6 rounded-2xl shadow-sm border border-slate-100 hover:border-brand-primary hover:shadow-xl hover:-translate-y-1 transition-all duration-300 text-left flex items-center justify-between overflow-hidden"
-                    >
-                      <div className="absolute left-0 top-0 bottom-0 w-1.5 bg-brand-primary opacity-0 group-hover:opacity-100 transition-opacity"></div>
-                      <div className="flex items-center gap-4 z-10">
-                        <div className="bg-brand-light p-3 rounded-xl group-hover:bg-brand-primary group-hover:text-white transition-colors">
-                          <MapPin className="w-6 h-6" />
-                        </div>
-                        <div>
-                          <span className="font-bold text-lg text-slate-700 group-hover:text-brand-primary transition-colors block">
-                            {union}
-                          </span>
-                          <span className="text-xs text-slate-400 font-medium">বিস্তারিত দেখতে ট্যাপ করুন</span>
-                        </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {UNIONS.map((union, index) => (
+                  <button
+                    key={index}
+                    onClick={() => handleUnionSelect(union)}
+                    className="group relative bg-white p-6 rounded-2xl shadow-sm border border-slate-100 hover:border-brand-primary hover:shadow-xl hover:-translate-y-1 transition-all duration-300 text-left flex items-center justify-between overflow-hidden"
+                  >
+                    <div className="absolute left-0 top-0 bottom-0 w-1.5 bg-brand-primary opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                    <div className="flex items-center gap-4 z-10">
+                      <div className="bg-brand-light p-3 rounded-xl group-hover:bg-brand-primary group-hover:text-white transition-colors">
+                        <MapPin className="w-6 h-6" />
                       </div>
-                      <ChevronRight className="w-6 h-6 text-slate-300 group-hover:text-brand-primary group-hover:translate-x-1 transition-all" />
-                    </button>
-                  ))}
-                </div>
+                      <div>
+                        <span className="font-bold text-lg text-slate-700 group-hover:text-brand-primary transition-colors block">
+                          {union}
+                        </span>
+                        <span className="text-xs text-slate-400 font-medium">বিস্তারিত দেখতে ট্যাপ করুন</span>
+                      </div>
+                    </div>
+                    <ChevronRight className="w-6 h-6 text-slate-300 group-hover:text-brand-primary group-hover:translate-x-1 transition-all" />
+                  </button>
+                ))}
               </div>
             )}
           </div>
@@ -199,6 +190,30 @@ export default function App() {
                   মোট ছাত্র-ছাত্রী: {displayStudents.length} জন
                 </div>
               </div>
+            </div>
+
+            {/* List View Search Bar - Sticky */}
+            <div className="mb-6 sticky top-[100px] z-10 bg-slate-50/80 backdrop-blur-md py-2 px-1 rounded-xl">
+               <div className="relative group">
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <Search className="h-5 w-5 text-brand-primary group-focus-within:scale-110 transition-transform" />
+                  </div>
+                  <input
+                    type="text"
+                    placeholder="এই ইউনিয়নের ভেতর খুঁজুন..."
+                    className="block w-full pl-10 pr-10 py-3 border border-slate-200 rounded-2xl leading-5 bg-white placeholder-slate-400 focus:outline-none focus:ring-4 focus:ring-brand-primary/10 focus:border-brand-primary shadow-sm transition-all text-lg"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                  />
+                  {searchQuery && (
+                     <button 
+                      onClick={() => setSearchQuery('')} 
+                      className="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-brand-primary transition-colors"
+                     >
+                        <X className="h-6 w-6" />
+                     </button>
+                  )}
+               </div>
             </div>
 
             <div className="space-y-3">
@@ -313,7 +328,7 @@ export default function App() {
                                <p className="text-xs text-slate-400 font-bold uppercase">Call Student</p>
                                <p className="text-slate-800 font-bold">
                                   {selectedStudent.gender === 'female' ? "017XXXXXXXX (Privacy)" : selectedStudent.mobile}
-                               </p>
+                                </p>
                             </div>
                         </a>
 
