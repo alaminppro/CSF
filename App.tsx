@@ -27,7 +27,7 @@ const Logo = () => (
         className="w-full h-full object-contain"
         onError={(e) => {
           // If local logo.png is missing, fallback to the blue theme placeholder
-          e.currentTarget.src = "https://scontent.fcgp3-2.fna.fbcdn.net/v/t39.30808-1/472265008_1033168891946375_7161103710877360556_n.jpg?stp=c0.0.1250.1250a_dst-jpg_s200x200_tt6&_nc_cat=101&ccb=1-7&_nc_sid=2d3e12&_nc_ohc=eIY5igmmmzwQ7kNvwF_67k8&_nc_oc=Adn_qhvwU_3lQqc-Qt2gY8Hdrek8gUyObaeEX_ORddgFPiQQOuDOjTES71MUSEEFes8&_nc_zt=24&_nc_ht=scontent.fcgp3-2.fna&_nc_gid=EwsRRq6z-Um5S3CTRyTDGg&oh=00_Afn-63pBGKRcuHEp9_j6N7-yzTZ2VEfFX55K7KkwKXqOEw&oe=69498B4C";
+          e.currentTarget.src = "https://scontent.fcgp3-2.fna.fbcdn.net/v/t39.30808-6/472265008_1033168891946375_7161103710877360556_n.jpg?_nc_cat=101&ccb=1-7&_nc_sid=6ee11a&_nc_ohc=L6xBDzBakFgQ7kNvwE8beO9&_nc_oc=AdnqPVw4oZ0oMpj0XoJWhZ_RQ71y9MZ8t02F5GPP321ejBfdZpXcXbvHuanErizTym8&_nc_zt=23&_nc_ht=scontent.fcgp3-2.fna&_nc_gid=Z4u4ZPfTzsuJmDpHe7npkw&oh=00_Aflvc-nGnPM7fTOPFyma3Q8tMbd04V2zUjOqW8o6aaGWZg&oe=69505ACA";
         }}
      />
   </div>
