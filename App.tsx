@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useRef } from 'react';
+import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { 
   Users, 
   MapPin, 
@@ -45,7 +45,40 @@ const Logo = ({ customLogo }: { customLogo: string | null }) => (
 );
 
 export default function App() {
-  const [students, setStudents] = useState<Student[]>(INITIAL_STUDENTS);
+  // Persistence Keys
+  const STORAGE_KEYS = {
+    STUDENTS: 'csf_students_data',
+    LOGO: 'csf_custom_logo',
+    FOOTER: 'csf_footer_text'
+  };
+
+  // State Initializers with LocalStorage fallback
+  const [students, setStudents] = useState<Student[]>(() => {
+    const saved = localStorage.getItem(STORAGE_KEYS.STUDENTS);
+    return saved ? JSON.parse(saved) : INITIAL_STUDENTS;
+  });
+
+  const [customLogo, setCustomLogo] = useState<string | null>(() => {
+    return localStorage.getItem(STORAGE_KEYS.LOGO);
+  });
+
+  const [footerText, setFooterText] = useState(() => {
+    return localStorage.getItem(STORAGE_KEYS.FOOTER) || "© 2025 Companiganj (Noakhali) Students' Forum, CU";
+  });
+
+  // Persist Data on Changes
+  useEffect(() => {
+    localStorage.setItem(STORAGE_KEYS.STUDENTS, JSON.stringify(students));
+  }, [students]);
+
+  useEffect(() => {
+    if (customLogo) localStorage.setItem(STORAGE_KEYS.LOGO, customLogo);
+  }, [customLogo]);
+
+  useEffect(() => {
+    localStorage.setItem(STORAGE_KEYS.FOOTER, footerText);
+  }, [footerText]);
+
   const [selectedUnion, setSelectedUnion] = useState<string | null>(null);
   const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
@@ -55,8 +88,6 @@ export default function App() {
   const [showLogin, setShowLogin] = useState(false);
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
-  const [customLogo, setCustomLogo] = useState<string | null>(null);
-  const [footerText, setFooterText] = useState("© 2025 Companiganj (Noakhali) Students' Forum, CU");
   const [showAdminPanel, setShowAdminPanel] = useState(false);
   const [showManualForm, setShowManualForm] = useState(false);
   
@@ -115,8 +146,15 @@ export default function App() {
   const handleLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
+      if (file.size > 2000000) { // 2MB Limit for LocalStorage safety
+        alert("ফাইলের সাইজ অনেক বড়। ২ মেগাবাইটের নিচের ছবি দিন।");
+        return;
+      }
       const reader = new FileReader();
-      reader.onloadend = () => setCustomLogo(reader.result as string);
+      reader.onloadend = () => {
+        const base64 = reader.result as string;
+        setCustomLogo(base64);
+      };
       reader.readAsDataURL(file);
     }
   };
@@ -279,12 +317,25 @@ export default function App() {
                 <h2 className="text-xl font-bold flex items-center gap-2 text-slate-700">
                   <Users className="w-5 h-5 text-brand-primary" /> মেম্বার লিস্ট ম্যানেজমেন্ট
                 </h2>
-                <button 
-                  onClick={() => setShowManualForm(true)} 
-                  className="bg-brand-primary text-white px-4 py-2 rounded-xl font-bold text-sm flex items-center gap-2 shadow-lg shadow-brand-primary/20"
-                >
-                  <Plus className="w-4 h-4" /> নতুন মেম্বার যোগ
-                </button>
+                <div className="flex gap-2">
+                  <button 
+                    onClick={() => {
+                      if(confirm("সব ডাটা মুছে ফেলে ডিফল্ট ডাটা রিস্টোর করবেন?")) {
+                        setStudents(INITIAL_STUDENTS);
+                        localStorage.removeItem(STORAGE_KEYS.STUDENTS);
+                      }
+                    }}
+                    className="text-slate-400 text-xs font-bold hover:text-red-500 transition-colors"
+                  >
+                    রিসেট ডাটা
+                  </button>
+                  <button 
+                    onClick={() => setShowManualForm(true)} 
+                    className="bg-brand-primary text-white px-4 py-2 rounded-xl font-bold text-sm flex items-center gap-2 shadow-lg shadow-brand-primary/20"
+                  >
+                    <Plus className="w-4 h-4" /> নতুন মেম্বার যোগ
+                  </button>
+                </div>
              </div>
              <div className="overflow-x-auto rounded-2xl border border-slate-100">
                <table className="w-full text-left text-sm">
@@ -555,7 +606,7 @@ export default function App() {
       {/* Login Modal */}
       {showLogin && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
-           <div className="bg-white p-8 rounded-[2.5rem] w-full max-w-sm shadow-2xl animate-in fade-in zoom-in-95">
+           <div className="bg-white p-8 rounded-[2.5rem] w-full max-sm shadow-2xl animate-in fade-in zoom-in-95">
               <div className="bg-brand-light w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 text-brand-primary"><Lock className="w-8 h-8" /></div>
               <h3 className="text-2xl font-black text-center mb-6 text-slate-800">অ্যাডমিন লগইন</h3>
               <div className="space-y-4">
