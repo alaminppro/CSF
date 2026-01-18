@@ -1,4 +1,3 @@
-
 import React, { useState, useMemo, useRef } from 'react';
 import { 
   Users, 
@@ -22,8 +21,9 @@ import {
   Save,
   Trash2,
   LogOut,
-  Upload
-} from 'lucide-center';
+  Upload,
+  Type
+} from 'lucide-react';
 import { STUDENTS as INITIAL_STUDENTS, UNIONS as INITIAL_UNIONS } from './constants';
 import { Student } from './types';
 
@@ -36,7 +36,7 @@ const Logo = ({ customLogo }: { customLogo: string | null }) => (
         className="w-full h-full object-contain"
         onError={(e) => {
           if (!customLogo) {
-            e.currentTarget.src = "https://scontent.fcgp3-2.fna.fbcdn.net/v/t39.30808-6/472265008_1033168891946375_7161103710877360556_n.jpg?_nc_cat=101&ccb=1-7&_nc_sid=6ee11a&_nc_ohc=L6xBDzBakFgQ7kNvwE8beO9&_nc_oc=AdnqPVw4oZ0oMpj0XoJWhZ_RQ71y9MZ8t02F5GPP321ejBfdZpXcXbvHuanErizTym8&_nc_zt=23&_nc_ht=scontent.fcgp3-2.fna&_nc_gid=Z4u4ZPfTzsuJmDpHe7npkw&oh=00_Aflvc-nGnPM7fTOPFyma3Q8tMbd04V2zUjOqW8o6aaGWZg&oe=69505ACA";
+            e.currentTarget.src = "https://ui-avatars.com/api/?name=CS&background=09b2eb&color=fff";
           }
         }}
      />
@@ -52,15 +52,33 @@ export default function App() {
   // Admin States
   const [isAdmin, setIsAdmin] = useState(false);
   const [showLogin, setShowLogin] = useState(false);
+  const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [customLogo, setCustomLogo] = useState<string | null>(null);
+  const [footerText, setFooterText] = useState("© 2025 Companiganj (Noakhali) Students' Forum, CU");
   const [showAdminPanel, setShowAdminPanel] = useState(false);
+  const [showManualForm, setShowManualForm] = useState(false);
   
   // CSV Import States
   const [csvData, setCsvData] = useState<string[][]>([]);
   const [mapping, setMapping] = useState<Record<string, number>>({});
   const fileInputRef = useRef<HTMLInputElement>(null);
   const logoInputRef = useRef<HTMLInputElement>(null);
+
+  // Manual Form State
+  const [newStudent, setNewStudent] = useState<Partial<Student>>({
+    gender: 'male',
+    union: INITIAL_UNIONS[0],
+    name: '',
+    department: '',
+    session: '',
+    mobile: '',
+    email: '',
+    highSchool: '',
+    college: '',
+    villageWard: '',
+    facebook: ''
+  });
 
   const displayStudents = useMemo(() => {
     let baseList = selectedUnion 
@@ -82,13 +100,14 @@ export default function App() {
   }, [selectedUnion, searchQuery, students]);
 
   const handleLogin = () => {
-    if (password === 'admin123') { // Simple demo password
+    if (username === 'csfdata' && password === 'csf2030') {
       setIsAdmin(true);
       setShowLogin(false);
+      setUsername('');
       setPassword('');
       setShowAdminPanel(true);
     } else {
-      alert('ভুল পাসওয়ার্ড!');
+      alert('ভুল ইউজারনেম বা পাসওয়ার্ড!');
     }
   };
 
@@ -108,7 +127,21 @@ export default function App() {
       reader.onload = (event) => {
         const text = event.target?.result as string;
         const rows = text.split('\n').map(row => row.split(',').map(cell => cell.trim()));
-        setCsvData(rows.filter(row => row.length > 1));
+        const validRows = rows.filter(row => row.length > 1);
+        setCsvData(validRows);
+        
+        // Auto-mapping logic
+        if (validRows.length > 0) {
+          const headers = validRows[0].map(h => h.toLowerCase().replace(/\s/g, ''));
+          const newMapping: Record<string, number> = {};
+          const fields = ['name', 'union', 'department', 'session', 'mobile', 'email', 'highschool', 'college', 'villageward', 'facebook', 'gender'];
+          
+          fields.forEach(field => {
+            const index = headers.findIndex(h => h.includes(field));
+            if (index !== -1) newMapping[field === 'highschool' ? 'highSchool' : field === 'villageward' ? 'villageWard' : field] = index;
+          });
+          setMapping(newMapping);
+        }
       };
       reader.readAsText(file);
     }
@@ -119,7 +152,7 @@ export default function App() {
     const imported: Student[] = csvData.slice(1).map((row, idx) => ({
       id: Date.now() + idx,
       name: row[mapping.name] || 'Unknown',
-      union: row[mapping.union] || 'অন্যান্য',
+      union: row[mapping.union] || INITIAL_UNIONS[0],
       department: row[mapping.department] || 'N/A',
       session: row[mapping.session] || 'N/A',
       mobile: row[mapping.mobile] || '',
@@ -136,14 +169,22 @@ export default function App() {
     alert(`${imported.length} জন ছাত্রছাত্রী যোগ করা হয়েছে!`);
   };
 
+  const handleManualSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newStudent.name || !newStudent.union) return;
+    const studentToAdd = {
+      ...newStudent,
+      id: Date.now()
+    } as Student;
+    setStudents([studentToAdd, ...students]);
+    setShowManualForm(false);
+    setNewStudent({ gender: 'male', union: INITIAL_UNIONS[0], name: '', department: '', session: '', mobile: '', email: '', highSchool: '', college: '', villageWard: '', facebook: '' });
+    alert('নতুন ছাত্র যোগ করা হয়েছে!');
+  };
+
   const closeModal = () => setSelectedStudent(null);
   const handleBackToUnions = () => { setSelectedUnion(null); setSelectedStudent(null); setSearchQuery(''); };
-
-  // Fix: Added missing handleUnionSelect function
-  const handleUnionSelect = (union: string) => {
-    setSelectedUnion(union);
-    setSearchQuery('');
-  };
+  const handleUnionSelect = (union: string) => { setSelectedUnion(union); setSearchQuery(''); };
 
   if (showAdminPanel && isAdmin) {
     return (
@@ -161,85 +202,102 @@ export default function App() {
         </header>
 
         <main className="max-w-4xl mx-auto px-4 mt-8 space-y-8 animate-in fade-in slide-in-from-bottom-4">
-          {/* Logo Setting */}
-          <section className="bg-white p-6 rounded-3xl shadow-sm border border-slate-200">
-            <h2 className="text-xl font-bold mb-4 flex items-center gap-2 text-slate-700">
-              <Upload className="w-5 h-5 text-brand-primary" /> লোগো আপডেট করুন
-            </h2>
-            <div className="flex items-center gap-6">
-              <div className="w-24 h-24 rounded-full border-2 border-brand-light flex items-center justify-center overflow-hidden bg-slate-50">
-                <img src={customLogo || "/logo.png"} alt="Preview" className="w-full h-full object-contain" />
+          {/* Logo & Footer Setting */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <section className="bg-white p-6 rounded-3xl shadow-sm border border-slate-200">
+              <h2 className="text-xl font-bold mb-4 flex items-center gap-2 text-slate-700">
+                <Upload className="w-5 h-5 text-brand-primary" /> লোগো আপডেট
+              </h2>
+              <div className="flex items-center gap-6">
+                <div className="w-20 h-20 rounded-full border-2 border-brand-light flex items-center justify-center overflow-hidden bg-slate-50">
+                  <img src={customLogo || "/logo.png"} alt="Preview" className="w-full h-full object-contain" onError={(e) => e.currentTarget.src = "https://ui-avatars.com/api/?name=Logo"} />
+                </div>
+                <input type="file" ref={logoInputRef} onChange={handleLogoUpload} className="hidden" accept="image/*" />
+                <button onClick={() => logoInputRef.current?.click()} className="bg-brand-primary text-white px-5 py-2 rounded-xl font-bold text-sm">ছবি পরিবর্তন</button>
               </div>
-              <input type="file" ref={logoInputRef} onChange={handleLogoUpload} className="hidden" accept="image/*" />
-              <button onClick={() => logoInputRef.current?.click()} className="bg-brand-primary text-white px-6 py-2.5 rounded-xl font-bold hover:bg-brand-secondary transition-all shadow-lg shadow-brand-primary/20">ছবি নির্বাচন করুন</button>
-            </div>
-          </section>
+            </section>
+
+            <section className="bg-white p-6 rounded-3xl shadow-sm border border-slate-200">
+              <h2 className="text-xl font-bold mb-4 flex items-center gap-2 text-slate-700">
+                <Type className="w-5 h-5 text-brand-primary" /> ফুটার টেক্সট আপডেট
+              </h2>
+              <textarea 
+                className="w-full p-3 border-2 border-slate-100 rounded-xl bg-slate-50 text-brand-primary font-bold focus:border-brand-primary focus:ring-0 outline-none"
+                rows={2}
+                value={footerText}
+                onChange={(e) => setFooterText(e.target.value)}
+                placeholder="ফুটার টেক্সট লিখুন..."
+              />
+            </section>
+          </div>
 
           {/* CSV Import */}
           <section className="bg-white p-6 rounded-3xl shadow-sm border border-slate-200">
-            <h2 className="text-xl font-bold mb-4 flex items-center gap-2 text-slate-700">
-              <FileUp className="w-5 h-5 text-brand-primary" /> CSV ফাইল থেকে নতুন লিস্ট আপলোড
-            </h2>
+            <div className="mb-4">
+              <h2 className="text-xl font-bold flex items-center gap-2 text-slate-700">
+                <FileUp className="w-5 h-5 text-brand-primary" /> CSV ফাইল থেকে আপলোড
+              </h2>
+              <p className="text-xs text-slate-400 mt-1">কলামের টাইটেল অবশ্যই ইংরেজি হতে হবে (যেমন: name, union, department, session, mobile, gender)</p>
+            </div>
             <div className="flex flex-col gap-4">
               <input type="file" ref={fileInputRef} onChange={handleCsvUpload} className="hidden" accept=".csv" />
               {!csvData.length ? (
-                <button onClick={() => fileInputRef.current?.click()} className="border-2 border-dashed border-slate-300 py-10 rounded-2xl flex flex-col items-center justify-center text-slate-400 hover:border-brand-primary hover:text-brand-primary transition-all">
-                  <FileUp className="w-12 h-12 mb-2" />
-                  <span className="font-bold">ক্লিক করে CSV ফাইল সিলেক্ট করুন</span>
+                <button onClick={() => fileInputRef.current?.click()} className="border-2 border-dashed border-slate-200 py-8 rounded-2xl flex flex-col items-center justify-center text-slate-400 hover:border-brand-primary hover:text-brand-primary transition-all">
+                  <FileUp className="w-10 h-10 mb-2" />
+                  <span className="font-bold">CSV ফাইল সিলেক্ট করুন</span>
                 </button>
               ) : (
                 <div className="space-y-4">
-                  <p className="font-bold text-slate-600">ফিল্ড ম্যাপিং করুন (Field Mapping):</p>
-                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                     {['name', 'union', 'department', 'session', 'mobile', 'email', 'highSchool', 'college', 'villageWard', 'facebook', 'gender'].map(field => (
                       <div key={field} className="space-y-1">
-                        <label className="text-xs font-bold uppercase text-slate-400">{field}</label>
+                        <label className="text-[10px] font-black uppercase text-slate-400">{field}</label>
                         <select 
-                          className="w-full p-2 border rounded-lg bg-slate-50 text-sm focus:ring-2 focus:ring-brand-primary outline-none"
+                          className="w-full p-2 border-2 border-slate-100 rounded-lg bg-slate-50 text-brand-primary font-bold text-xs outline-none focus:border-brand-primary"
+                          value={mapping[field] ?? ""}
                           onChange={(e) => setMapping({...mapping, [field]: parseInt(e.target.value)})}
-                          defaultValue=""
                         >
-                          <option value="" disabled>কলাম বেছে নিন</option>
+                          <option value="">সিলেক্ট করুন</option>
                           {csvData[0].map((header, i) => <option key={i} value={i}>{header}</option>)}
                         </select>
                       </div>
                     ))}
                   </div>
                   <div className="flex gap-2">
-                    <button onClick={applyCsvImport} className="flex-1 bg-brand-primary text-white py-3 rounded-xl font-bold hover:bg-brand-secondary shadow-lg shadow-brand-primary/20 transition-all">ডাটা ইম্পোর্ট করুন</button>
-                    <button onClick={() => setCsvData([])} className="px-6 py-3 bg-slate-200 rounded-xl font-bold text-slate-600 hover:bg-slate-300">বাতিল</button>
+                    <button onClick={applyCsvImport} className="flex-1 bg-brand-primary text-white py-3 rounded-xl font-bold">ইম্পোর্ট শুরু করুন</button>
+                    <button onClick={() => setCsvData([])} className="px-6 py-3 bg-slate-200 rounded-xl font-bold">বাতিল</button>
                   </div>
                 </div>
               )}
             </div>
           </section>
 
-          {/* Manual Student Addition */}
+          {/* List Management */}
           <section className="bg-white p-6 rounded-3xl shadow-sm border border-slate-200">
-             <div className="flex justify-between items-center mb-4">
+             <div className="flex justify-between items-center mb-6">
                 <h2 className="text-xl font-bold flex items-center gap-2 text-slate-700">
-                  <Users className="w-5 h-5 text-brand-primary" /> বর্তমান লিস্ট ম্যানেজমেন্ট
+                  <Users className="w-5 h-5 text-brand-primary" /> মেম্বার লিস্ট ম্যানেজমেন্ট
                 </h2>
                 <button 
-                  onClick={() => alert('ম্যানুয়াল ফরম এখানে যোগ করা যাবে...')} 
-                  className="bg-brand-light text-brand-primary px-4 py-2 rounded-xl font-bold text-sm flex items-center gap-2 hover:bg-brand-primary hover:text-white transition-all"
+                  onClick={() => setShowManualForm(true)} 
+                  className="bg-brand-primary text-white px-4 py-2 rounded-xl font-bold text-sm flex items-center gap-2 shadow-lg shadow-brand-primary/20"
                 >
-                  <Plus className="w-4 h-4" /> ম্যানুয়ালি যোগ করুন
+                  <Plus className="w-4 h-4" /> নতুন মেম্বার যোগ
                 </button>
              </div>
-             <div className="overflow-x-auto">
+             <div className="overflow-x-auto rounded-2xl border border-slate-100">
                <table className="w-full text-left text-sm">
-                 <thead className="bg-slate-50 text-slate-400 uppercase text-[10px] font-black tracking-widest">
+                 <thead className="bg-slate-50 text-slate-400 uppercase text-[10px] font-black">
                    <tr>
-                     <th className="px-4 py-3">নাম</th>
-                     <th className="px-4 py-3">বিভাগ</th>
-                     <th className="px-4 py-3">ইউনিয়ন</th>
-                     <th className="px-4 py-3 text-right">অ্যাকশন</th>
+                     <th className="px-4 py-4">নাম</th>
+                     <th className="px-4 py-4">বিভাগ</th>
+                     <th className="px-4 py-4">ইউনিয়ন</th>
+                     <th className="px-4 py-4 text-right">অ্যাকশন</th>
                    </tr>
                  </thead>
                  <tbody className="divide-y divide-slate-100">
-                   {students.slice(0, 10).map(s => (
-                     <tr key={s.id} className="hover:bg-slate-50 transition-colors">
+                   {students.slice(0, 30).map(s => (
+                     <tr key={s.id} className="hover:bg-slate-50/50">
                        <td className="px-4 py-3 font-bold text-slate-700">{s.name}</td>
                        <td className="px-4 py-3 text-slate-500">{s.department}</td>
                        <td className="px-4 py-3 text-slate-500">{s.union}</td>
@@ -250,33 +308,70 @@ export default function App() {
                    ))}
                  </tbody>
                </table>
-               {students.length > 10 && <p className="text-center py-4 text-xs text-slate-400">আরও {students.length - 10} জন ছাত্রছাত্রী আছে...</p>}
+               {students.length === 0 && <p className="text-center py-10 text-slate-400 italic">লিস্টে কোন ডাটা নেই</p>}
              </div>
           </section>
         </main>
+
+        {/* Manual Add Form Modal */}
+        {showManualForm && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm">
+            <div className="bg-white p-8 rounded-[2.5rem] w-full max-w-2xl shadow-2xl animate-in zoom-in-95 overflow-y-auto max-h-[90vh]">
+              <div className="flex justify-between items-center mb-6">
+                <h3 className="text-2xl font-black text-slate-800">নতুন ছাত্র যোগ করুন</h3>
+                <button onClick={() => setShowManualForm(false)} className="bg-slate-100 p-2 rounded-full text-slate-600"><X className="w-5 h-5" /></button>
+              </div>
+              <form onSubmit={handleManualSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-1 col-span-2 md:col-span-1">
+                  <label className="text-xs font-bold text-slate-500 ml-1">পূর্ণ নাম</label>
+                  <input placeholder="Ex: Md. Rahim" className="w-full p-3 border-2 border-slate-100 rounded-xl bg-slate-50 text-brand-primary font-bold outline-none focus:border-brand-primary" required onChange={e => setNewStudent({...newStudent, name: e.target.value})} />
+                </div>
+                <div className="space-y-1 col-span-2 md:col-span-1">
+                  <label className="text-xs font-bold text-slate-500 ml-1">ইউনিয়ন</label>
+                  <select className="w-full p-3 border-2 border-slate-100 rounded-xl bg-slate-50 text-brand-primary font-bold outline-none focus:border-brand-primary" value={newStudent.union} onChange={e => setNewStudent({...newStudent, union: e.target.value})}>
+                    {INITIAL_UNIONS.map(u => <option key={u} value={u}>{u}</option>)}
+                  </select>
+                </div>
+                <div className="space-y-1">
+                  <label className="text-xs font-bold text-slate-500 ml-1">বিভাগ</label>
+                  <input placeholder="Ex: Physics" className="w-full p-3 border-2 border-slate-100 rounded-xl bg-slate-50 text-brand-primary font-bold outline-none focus:border-brand-primary" onChange={e => setNewStudent({...newStudent, department: e.target.value})} />
+                </div>
+                <div className="space-y-1">
+                  <label className="text-xs font-bold text-slate-500 ml-1">সেশন</label>
+                  <input placeholder="Ex: 20-21" className="w-full p-3 border-2 border-slate-100 rounded-xl bg-slate-50 text-brand-primary font-bold outline-none focus:border-brand-primary" onChange={e => setNewStudent({...newStudent, session: e.target.value})} />
+                </div>
+                <div className="space-y-1">
+                  <label className="text-xs font-bold text-slate-500 ml-1">মোবাইল নম্বর</label>
+                  <input placeholder="017xxxxxxxx" className="w-full p-3 border-2 border-slate-100 rounded-xl bg-slate-50 text-brand-primary font-bold outline-none focus:border-brand-primary" onChange={e => setNewStudent({...newStudent, mobile: e.target.value})} />
+                </div>
+                <div className="space-y-1">
+                  <label className="text-xs font-bold text-slate-500 ml-1">জেন্ডার</label>
+                  <select className="w-full p-3 border-2 border-slate-100 rounded-xl bg-slate-50 text-brand-primary font-bold outline-none focus:border-brand-primary" value={newStudent.gender} onChange={e => setNewStudent({...newStudent, gender: e.target.value as 'male' | 'female'})}>
+                    <option value="male">Male</option>
+                    <option value="female">Female</option>
+                  </select>
+                </div>
+                <div className="col-span-2 flex gap-3 mt-6">
+                  <button type="submit" className="flex-1 bg-brand-primary text-white py-4 rounded-2xl font-bold shadow-lg shadow-brand-primary/20">সংরক্ষণ করুন</button>
+                  <button type="button" onClick={() => setShowManualForm(false)} className="px-8 py-4 bg-slate-100 rounded-2xl font-bold text-slate-500">বাতিল</button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
       </div>
     );
   }
 
   return (
     <div className="min-h-screen bg-slate-50 text-slate-800 font-sans pb-12 transition-colors duration-300">
-      {/* Admin Floating Button */}
-      {!isAdmin && (
-        <button 
-          onClick={() => setShowLogin(true)}
-          className="fixed bottom-6 right-6 z-40 bg-white/80 backdrop-blur shadow-xl border border-slate-200 p-3 rounded-full text-slate-400 hover:text-brand-primary hover:scale-110 transition-all active:scale-95"
-          title="Admin Login"
-        >
+      {/* Admin Toggle */}
+      {!isAdmin ? (
+        <button onClick={() => setShowLogin(true)} className="fixed bottom-6 right-6 z-40 bg-white shadow-xl border p-3 rounded-full text-slate-300 hover:text-brand-primary transition-all">
           <Lock className="w-5 h-5" />
         </button>
-      )}
-
-      {isAdmin && (
-        <button 
-          onClick={() => setShowAdminPanel(true)}
-          className="fixed bottom-6 right-6 z-40 bg-brand-primary shadow-xl border border-white/20 p-4 rounded-full text-white hover:scale-110 transition-all active:scale-95 animate-bounce"
-          title="Go to Admin Panel"
-        >
+      ) : (
+        <button onClick={() => setShowAdminPanel(true)} className="fixed bottom-6 right-6 z-40 bg-brand-primary shadow-xl p-4 rounded-full text-white animate-bounce">
           <Settings className="w-6 h-6" />
         </button>
       )}
@@ -287,12 +382,8 @@ export default function App() {
           <div className="flex items-center gap-4">
             <Logo customLogo={customLogo} />
             <div>
-              <h1 className="text-lg sm:text-xl font-bold leading-tight drop-shadow-sm">
-                Companiganj (Noakhali) Students' Forum, University of Chittagong
-              </h1>
-              <p className="text-sm opacity-90 text-slate-100 font-medium mt-1 italic">
-                জ্ঞানের পথে চলি একসাথে
-              </p>
+              <h1 className="text-lg sm:text-xl font-bold leading-tight">Companiganj (Noakhali) Students' Forum, CU</h1>
+              <p className="text-sm opacity-90 italic">জ্ঞানের পথে চলি একসাথে</p>
             </div>
           </div>
         </div>
@@ -300,166 +391,127 @@ export default function App() {
 
       <main className="max-w-3xl mx-auto px-4 mt-6">
         {!selectedUnion ? (
-          <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+          <div className="animate-in fade-in duration-500">
             <div className="text-center mb-6">
-              <h2 className="text-2xl font-bold text-brand-primary mb-2">এলাকা নির্বাচন করুন</h2>
-              <p className="text-slate-500">আপনার ইউনিয়নের ছাত্রছাত্রীদের দেখতে নিচে ক্লিক করুন</p>
+              <h2 className="text-2xl font-bold text-brand-primary">এলাকা নির্বাচন করুন</h2>
+              <p className="text-slate-500">ছাত্রছাত্রীদের দেখতে নিচে ক্লিক করুন</p>
             </div>
 
-            <div className="mb-8 relative group max-w-2xl mx-auto">
+            <div className="mb-8 relative max-w-2xl mx-auto">
               <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <Search className="h-5 w-5 text-brand-primary group-focus-within:scale-110 transition-transform" />
+                <Search className="h-5 w-5 text-brand-primary" />
               </div>
               <input
                 type="text"
-                placeholder="নাম, বিভাগ, গ্রাম বা ইউনিয়ন দিয়ে খুঁজুন..."
-                className="block w-full pl-10 pr-10 py-3.5 border border-slate-200 rounded-2xl leading-5 bg-white placeholder-slate-400 focus:outline-none focus:ring-4 focus:ring-brand-primary/10 focus:border-brand-primary shadow-sm transition-all text-lg"
+                placeholder="নাম, বিভাগ বা ইউনিয়ন দিয়ে খুঁজুন..."
+                className="block w-full pl-10 pr-10 py-3.5 border rounded-2xl bg-white outline-none shadow-sm focus:ring-2 focus:ring-brand-primary/20 transition-all text-brand-primary font-bold"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
               />
-              {searchQuery && (
-                 <button onClick={() => setSearchQuery('')} className="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-brand-primary">
-                    <X className="h-6 w-6" />
-                 </button>
-              )}
+              {searchQuery && <button onClick={() => setSearchQuery('')} className="absolute inset-y-0 right-0 pr-3"><X className="h-6 w-6 text-slate-400" /></button>}
             </div>
 
             {searchQuery ? (
               <div className="space-y-3">
-                <h2 className="text-xl font-bold text-slate-700 mb-4 px-1 flex items-center gap-2">
-                  <Search className="w-5 h-5 text-brand-primary" />
-                  খুঁজে পাওয়া গেছে: {displayStudents.length} জন
-                </h2>
-                {displayStudents.length > 0 ? (
-                  displayStudents.map((student) => <StudentListItem key={student.id} student={student} onSelect={() => setSelectedStudent(student)} />)
-                ) : (
-                  <EmptyState query={searchQuery} />
-                )}
+                {displayStudents.map((s) => <StudentListItem key={s.id} student={s} onSelect={() => setSelectedStudent(s)} />)}
+                {displayStudents.length === 0 && <EmptyState query={searchQuery} />}
               </div>
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                {INITIAL_UNIONS.map((union, index) => (
-                  <button key={index} onClick={() => handleUnionSelect(union)} className="group relative bg-white p-6 rounded-2xl shadow-sm border border-slate-100 hover:border-brand-primary hover:shadow-xl transition-all duration-300 text-left flex items-center justify-between">
-                    <div className="absolute left-0 top-0 bottom-0 w-1.5 bg-brand-primary opacity-0 group-hover:opacity-100 transition-opacity"></div>
-                    <div className="flex items-center gap-4 z-10">
-                      <div className="bg-brand-light p-3 rounded-xl group-hover:bg-brand-primary group-hover:text-white transition-colors">
-                        <MapPin className="w-6 h-6" />
-                      </div>
-                      <div>
-                        <span className="font-bold text-lg text-slate-700 group-hover:text-brand-primary transition-colors block">{union}</span>
-                        <span className="text-xs text-slate-400 font-medium">বিস্তারিত দেখতে ট্যাপ করুন</span>
-                      </div>
+                {INITIAL_UNIONS.map((union, i) => (
+                  <button key={i} onClick={() => handleUnionSelect(union)} className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 hover:border-brand-primary hover:shadow-md flex items-center justify-between transition-all group">
+                    <div className="flex items-center gap-4">
+                      <div className="bg-brand-light p-3 rounded-xl text-brand-primary group-hover:bg-brand-primary group-hover:text-white transition-colors"><MapPin className="w-6 h-6" /></div>
+                      <span className="font-bold text-lg text-slate-700">{union}</span>
                     </div>
-                    <ChevronRight className="w-6 h-6 text-slate-300 group-hover:text-brand-primary group-hover:translate-x-1" />
+                    <ChevronRight className="w-6 h-6 text-slate-300 group-hover:text-brand-primary group-hover:translate-x-1 transition-all" />
                   </button>
                 ))}
               </div>
             )}
           </div>
         ) : (
-          <div className="animate-in fade-in slide-in-from-right-8 duration-300">
-            <button onClick={handleBackToUnions} className="flex items-center text-slate-500 hover:text-brand-primary mb-4 font-bold group">
-              <ChevronLeft className="w-6 h-6 mr-1 group-hover:-translate-x-1 transition-transform" /> ইউনিয়ন লিস্টে ফিরে যান
-            </button>
-            <div className="bg-brand-primary rounded-2xl p-8 text-white mb-6 shadow-xl relative overflow-hidden border-b-4 border-brand-secondary">
-              <div className="absolute right-0 top-0 opacity-10 transform translate-x-4 -translate-y-4"><Users className="w-40 h-40" /></div>
-              <div className="relative z-10">
-                <div className="flex items-center gap-2 mb-2 text-brand-light/80 font-bold uppercase tracking-wider text-xs"><MapPin className="w-3.5 h-3.5" /> Location</div>
-                <h2 className="text-3xl font-bold mb-2">{selectedUnion}</h2>
-                <div className="flex items-center gap-2 bg-black/10 w-fit px-3 py-1 rounded-full text-sm font-medium border border-white/10">
-                  <Users className="w-4 h-4" /> মোট ছাত্র-ছাত্রী: {displayStudents.length} জন
-                </div>
+          <div className="animate-in slide-in-from-right duration-300">
+            <button onClick={handleBackToUnions} className="flex items-center text-slate-500 mb-6 font-bold hover:text-brand-primary transition-colors"><ChevronLeft className="mr-1" /> ফিরে যান</button>
+            <div className="bg-brand-primary rounded-2xl p-6 text-white mb-6 flex justify-between items-center shadow-lg">
+              <div>
+                <h2 className="text-3xl font-black">{selectedUnion}</h2>
+                <p className="opacity-80 font-medium">মোট ছাত্রছাত্রী: {displayStudents.length} জন</p>
               </div>
-            </div>
-            <div className="mb-6 sticky top-[100px] z-10 bg-slate-50/80 backdrop-blur-md py-2 px-1 rounded-xl">
-               <div className="relative group">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none"><Search className="h-5 w-5 text-brand-primary" /></div>
-                  <input type="text" placeholder="এই ইউনিয়নের ভেতর খুঁজুন..." className="block w-full pl-10 pr-10 py-3 border border-slate-200 rounded-2xl bg-white focus:ring-4 focus:ring-brand-primary/10 outline-none text-lg" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} />
-               </div>
+              <Users className="w-12 h-12 opacity-20" />
             </div>
             <div className="space-y-3">
-              {displayStudents.map((student) => <StudentListItem key={student.id} student={student} onSelect={() => setSelectedStudent(student)} />)}
+              {displayStudents.map((s) => <StudentListItem key={s.id} student={s} onSelect={() => setSelectedStudent(s)} />)}
             </div>
           </div>
         )}
       </main>
 
       <footer className="mt-16 text-center text-slate-400 text-sm pb-8 border-t border-slate-200 pt-8 mx-4">
-        <p className="flex items-center justify-center gap-2 flex-wrap">
-          <span>© 2025 Companiganj (Noakhali) Students' Forum, CU</span>
-          <span className="hidden sm:inline">|</span>
-          <span>Developed by: <a href="https://www.facebook.com/itsmdalamin" target="_blank" rel="noopener noreferrer" className="text-brand-primary hover:underline font-bold">Md Al Amin</a></span>
-        </p>
+        <p className="text-brand-primary font-bold">{footerText}</p>
+        <p className="mt-2">Developed by: <a href="https://www.facebook.com/itsmdalamin" target="_blank" className="text-brand-primary font-bold underline">Md Al Amin</a></p>
       </footer>
 
-      {/* Detail Modal */}
+      {/* Details Modal */}
       {selectedStudent && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-slate-900/80 backdrop-blur-md" onClick={closeModal}></div>
-          <div className="relative bg-white w-full max-w-md rounded-[2rem] shadow-2xl overflow-hidden animate-in zoom-in-95">
-            <div className="bg-brand-primary p-5 flex justify-between items-start text-white">
-              <h3 className="font-bold text-xl">ছাত্র বিস্তারিত (Profile)</h3>
-              <button onClick={closeModal} className="bg-white/20 rounded-full p-2"><X className="w-6 h-6" /></button>
+          <div className="absolute inset-0 bg-slate-900/80 backdrop-blur-sm" onClick={closeModal}></div>
+          <div className="relative bg-white w-full max-w-md rounded-[2.5rem] shadow-2xl overflow-hidden animate-in zoom-in-95">
+            <div className="bg-brand-primary p-6 flex justify-between text-white">
+              <h3 className="font-bold text-xl flex items-center gap-2"><Users className="w-5 h-5" /> প্রোফাইল</h3>
+              <button onClick={closeModal} className="bg-white/20 p-2 rounded-full"><X className="w-5 h-5" /></button>
             </div>
-            <div className="p-6 max-h-[75vh] overflow-y-auto">
-              <div className="text-center mb-8">
-                 <img src={`https://ui-avatars.com/api/?name=${encodeURIComponent(selectedStudent.name)}&size=128&background=e6f7fd&color=09b2eb&bold=true`} alt={selectedStudent.name} className="w-28 h-28 rounded-full mx-auto border-4 border-white shadow-xl -mt-16 bg-white object-cover" />
+            <div className="p-8">
+              <div className="text-center mb-6">
+                 <img src={`https://ui-avatars.com/api/?name=${encodeURIComponent(selectedStudent.name)}&background=e6f7fd&color=09b2eb&bold=true&size=128`} alt="" className="w-24 h-24 rounded-full mx-auto border-4 border-white shadow-lg -mt-20 bg-white" />
                  <h2 className="text-2xl font-black text-slate-800 mt-4">{selectedStudent.name}</h2>
-                 <p className="text-brand-primary font-bold text-sm bg-brand-light px-3 py-1 rounded-full inline-block mt-1">{selectedStudent.department} ({selectedStudent.session})</p>
+                 <p className="text-brand-primary font-bold">{selectedStudent.department} ({selectedStudent.session})</p>
               </div>
-              <div className="space-y-5">
-                <div className="flex gap-4 items-start p-1">
-                   <div className="bg-brand-light p-3 rounded-2xl text-brand-primary"><Building2 className="w-6 h-6" /></div>
-                   <div className="flex-1 border-b border-slate-100 pb-2"><p className="text-[10px] text-slate-400 uppercase font-black mb-1">Union Name</p><p className="text-slate-800 font-bold text-lg">{selectedStudent.union}</p></div>
+              <div className="space-y-4">
+                <div className="flex items-center gap-4 p-3 bg-slate-50 rounded-2xl">
+                  <div className="bg-white p-2 rounded-lg text-brand-primary shadow-sm"><Phone className="w-5 h-5" /></div>
+                  <span className="font-bold text-slate-700">{selectedStudent.gender === 'female' ? "017XXXXXXXX" : selectedStudent.mobile}</span>
                 </div>
-                <div className="flex gap-4 items-start p-1">
-                   <div className="bg-amber-50 p-3 rounded-2xl text-amber-500"><Home className="w-6 h-6" /></div>
-                   <div className="flex-1 border-b border-slate-100 pb-2"><p className="text-[10px] text-slate-400 uppercase font-black mb-1">গ্রাম + ওয়ার্ড নং</p><p className="text-slate-800 font-bold text-lg">{selectedStudent.villageWard || 'তথ্য নেই'}</p></div>
+                <div className="flex items-center gap-4 p-3 bg-slate-50 rounded-2xl">
+                  <div className="bg-white p-2 rounded-lg text-brand-primary shadow-sm"><Mail className="w-5 h-5" /></div>
+                  <span className="font-medium text-slate-700 truncate">{selectedStudent.email || 'N/A'}</span>
                 </div>
-                <div className="flex gap-4 items-start p-1">
-                   <div className="bg-indigo-50 p-3 rounded-2xl text-indigo-500"><School className="w-6 h-6" /></div>
-                   <div className="flex-1 border-b border-slate-100 pb-2"><p className="text-[10px] text-slate-400 uppercase font-black mb-1">Education</p>
-                    <p className="text-slate-700 text-sm leading-snug"><span className="font-bold text-slate-900">স্কুল:</span> {selectedStudent.highSchool}</p>
-                    <p className="text-slate-700 text-sm leading-snug"><span className="font-bold text-slate-900">কলেজ:</span> {selectedStudent.college}</p>
-                   </div>
-                </div>
-                <div className="pt-4 space-y-3">
-                    <div className="grid grid-cols-1 gap-3">
-                        <a href={selectedStudent.gender === 'female' ? undefined : `tel:${selectedStudent.mobile}`} className={`flex items-center gap-4 p-4 rounded-2xl border-2 transition-all ${selectedStudent.gender === 'female' ? 'bg-slate-50 border-slate-100' : 'border-slate-100 hover:border-brand-primary hover:bg-brand-light'}`} onClick={(e) => selectedStudent.gender === 'female' && e.preventDefault()}>
-                            <Phone className="w-5 h-5 text-brand-primary" />
-                            <p className="text-slate-800 font-bold">{selectedStudent.gender === 'female' ? "017XXXXXXXX (Privacy)" : selectedStudent.mobile}</p>
-                        </a>
-                        <a href={`mailto:${selectedStudent.email}`} className="flex items-center gap-4 p-4 rounded-2xl border-2 border-slate-100 hover:border-brand-primary hover:bg-brand-light transition-all"><Mail className="w-5 h-5 text-brand-primary" /><p className="text-slate-800 font-bold truncate">{selectedStudent.email}</p></a>
-                        <a href={selectedStudent.facebook.startsWith('http') ? selectedStudent.facebook : `https://${selectedStudent.facebook}`} target="_blank" rel="noopener noreferrer" className="flex items-center gap-4 p-4 rounded-2xl border-2 border-slate-100 hover:border-blue-500 hover:bg-blue-50 transition-all"><Facebook className="w-5 h-5 text-blue-600" /><p className="text-slate-800 font-bold">Social Link</p></a>
-                    </div>
+                <div className="flex items-center gap-4 p-3 bg-slate-50 rounded-2xl">
+                  <div className="bg-white p-2 rounded-lg text-brand-primary shadow-sm"><Home className="w-5 h-5" /></div>
+                  <span className="font-medium text-slate-700">{selectedStudent.villageWard || selectedStudent.union}</span>
                 </div>
               </div>
+              <button onClick={closeModal} className="w-full mt-8 bg-brand-primary text-white py-4 rounded-2xl font-bold shadow-lg shadow-brand-primary/20 active:scale-95 transition-all">বন্ধ করুন</button>
             </div>
-            <div className="bg-slate-50 p-5 border-t border-slate-100 flex justify-center"><button onClick={closeModal} className="px-10 py-3 bg-brand-primary text-white font-bold rounded-2xl shadow-lg">বন্ধ করুন</button></div>
           </div>
         </div>
       )}
 
-      {/* Admin Login Modal */}
+      {/* Login Modal */}
       {showLogin && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-           <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" onClick={() => setShowLogin(false)}></div>
-           <div className="relative bg-white w-full max-w-sm rounded-[2rem] p-8 shadow-2xl animate-in fade-in zoom-in-95 duration-200">
-              <div className="text-center mb-6">
-                 <div className="bg-brand-light w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 text-brand-primary"><Lock className="w-8 h-8" /></div>
-                 <h3 className="text-2xl font-black text-slate-800">অ্যাডমিন প্যানেল</h3>
-                 <p className="text-slate-400">পাসওয়ার্ড প্রদান করে প্রবেশ করুন</p>
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
+           <div className="bg-white p-8 rounded-[2.5rem] w-full max-w-sm shadow-2xl animate-in fade-in zoom-in-95">
+              <div className="bg-brand-light w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 text-brand-primary"><Lock className="w-8 h-8" /></div>
+              <h3 className="text-2xl font-black text-center mb-6 text-slate-800">অ্যাডমিন লগইন</h3>
+              <div className="space-y-4">
+                <input 
+                  type="text" 
+                  placeholder="ইউজারনেম" 
+                  className="w-full p-4 border-2 border-slate-100 rounded-2xl outline-none focus:border-brand-primary transition-all text-brand-primary font-bold placeholder:text-slate-400"
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
+                />
+                <input 
+                  type="password" 
+                  placeholder="পাসওয়ার্ড" 
+                  className="w-full p-4 border-2 border-slate-100 rounded-2xl outline-none focus:border-brand-primary transition-all text-brand-primary font-bold placeholder:text-slate-400"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  onKeyDown={(e) => e.key === 'Enter' && handleLogin()}
+                />
               </div>
-              <input 
-                type="password" 
-                placeholder="Password" 
-                className="w-full px-6 py-4 bg-slate-100 border-2 border-transparent focus:border-brand-primary focus:bg-white rounded-2xl outline-none transition-all mb-4 text-lg text-center"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                onKeyDown={(e) => e.key === 'Enter' && handleLogin()}
-              />
-              <button onClick={handleLogin} className="w-full bg-brand-primary text-white py-4 rounded-2xl font-bold text-lg shadow-lg shadow-brand-primary/30 active:scale-95 transition-all">লগইন করুন</button>
-              <button onClick={() => setShowLogin(false)} className="w-full text-slate-400 mt-4 text-sm font-bold">বাতিল করুন</button>
+              <button onClick={handleLogin} className="w-full bg-brand-primary text-white py-4 rounded-2xl font-bold mt-6 shadow-lg shadow-brand-primary/20 active:scale-95 transition-all">প্রবেশ করুন</button>
+              <button onClick={() => setShowLogin(false)} className="w-full mt-4 text-slate-400 font-bold text-sm">বাতিল</button>
            </div>
         </div>
       )}
@@ -467,29 +519,23 @@ export default function App() {
   );
 }
 
-// Fix: Destructure 'key' out of props if passed or just use it in the map loop externally. 
-// In React, components don't receive 'key' as a prop.
 const StudentListItem = ({ student, onSelect }: { student: Student; onSelect: () => void }) => (
-  <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4 transition-all hover:shadow-lg hover:border-brand-primary/30 group">
+  <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-4 flex items-center justify-between gap-4 transition-all hover:shadow-md">
     <div className="flex items-center gap-4">
-      <img src={`https://ui-avatars.com/api/?name=${encodeURIComponent(student.name)}&background=e6f7fd&color=09b2eb&bold=true`} alt={student.name} className="w-14 h-14 rounded-2xl object-cover border-2 border-brand-light transition-transform group-hover:scale-105" />
+      <img src={`https://ui-avatars.com/api/?name=${encodeURIComponent(student.name)}&background=e6f7fd&color=09b2eb&bold=true`} alt="" className="w-14 h-14 rounded-2xl object-cover" />
       <div>
-        <h3 className="font-bold text-lg text-slate-800 group-hover:text-brand-primary transition-colors">{student.name}</h3>
-        <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-3 text-sm text-slate-500">
-          <span className="flex items-center gap-1 bg-slate-50 px-2 py-0.5 rounded-lg border border-slate-100"><BookOpen className="w-3 h-3 text-brand-primary" /> {student.department}</span>
-          <span className="flex items-center gap-1"><CalendarDays className="w-3 h-3" /> সেশন: {student.session}</span>
-        </div>
-        <p className="text-[10px] mt-1 text-slate-400 flex items-center gap-1"><MapPin className="w-3 h-3" /> {student.union}</p>
+        <h3 className="font-bold text-lg text-slate-800 leading-tight">{student.name}</h3>
+        <p className="text-xs text-slate-500 font-medium mt-0.5">{student.department} | সেশন: {student.session}</p>
       </div>
     </div>
-    <button onClick={onSelect} className="w-full sm:w-auto px-6 py-2.5 bg-brand-light text-brand-primary font-bold rounded-xl border border-brand-primary/20 hover:bg-brand-primary hover:text-white transition-all text-sm flex items-center justify-center gap-2">বিস্তারিত <ChevronRight className="w-4 h-4" /></button>
+    <button onClick={onSelect} className="px-5 py-2.5 bg-brand-light text-brand-primary rounded-xl font-bold text-sm hover:bg-brand-primary hover:text-white transition-all">বিস্তারিত</button>
   </div>
 );
 
 const EmptyState = ({ query }: { query: string }) => (
-  <div className="text-center py-16 text-slate-400 bg-white rounded-3xl border border-dashed border-slate-200">
-    <div className="bg-slate-50 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-4"><Search className="w-10 h-10 opacity-20" /></div>
-    <p className="text-lg font-medium text-slate-600">কোন ফলাফল পাওয়া যায়নি!</p>
-    <p className="text-sm px-10">"{query}" এর সাথে মেলে এমন কোন তথ্য নেই।</p>
+  <div className="text-center py-12 bg-white rounded-3xl border border-dashed border-slate-200">
+    <Search className="w-12 h-12 text-slate-200 mx-auto mb-3" />
+    <p className="text-slate-500 font-bold">কোন ফলাফল পাওয়া যায়নি</p>
+    <p className="text-xs text-slate-400 px-8 mt-1">"{query}" এর সাথে মেলে এমন কেউ আমাদের লিস্টে নেই।</p>
   </div>
 );
